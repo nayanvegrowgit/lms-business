@@ -6,8 +6,8 @@ import (
 
 type BorrowingRecord struct {
 	gorm.Model
-	BookID       uint `gorm:"foreignKey:BookID"`
-	UserID       uint
-	DateOfIssue  string `gorm:"type:date;"`
+	BookID       uint   `gorm:"foreignKey:BookID"`
+	UserID       uint   `gorm:"foreignKey:BookID"`
+	DateOfIssue  string `gorm:`
 	DateOfReturn string `grom:"default:null"`
 }

@@ -31,7 +31,7 @@ func main() {
 
 	router.GET("/borrow", authorization.AuthMiddleware, handlers.ListBorrowRecordHandler)
 	router.POST("/borrow", authorization.AuthMiddleware, handlers.IssueBookHandler)
-	router.POST("/borrow/search", authorization.AuthMiddleware, handlers.SearchBorrowRecordHandler)
+	router.GET("/borrowedbooks", authorization.AuthMiddleware, handlers.SearchBorrowRecordHandler)
 	router.PATCH("/borrow/:id", authorization.AuthMiddleware, handlers.ReturnBookHandler)
 	router.DELETE("/borrow/:id", authorization.AuthMiddleware, handlers.DeleteBorrowRecordHandler)
 	router.Run()

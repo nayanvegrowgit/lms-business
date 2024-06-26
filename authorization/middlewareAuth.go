@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -28,10 +27,18 @@ func LoggerMiddleware() gin.HandlerFunc {
 		fmt.Println("After the handler")
 	}
 }
+
 func AuthMiddleware(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
-
+	//authHeader := c.Request.Header["Authorization"][0]
+	print("Read request header\n")
+	for key, value := range c.Request.Header {
+		fmt.Println("Header:", key, "=", value)
+	}
+	print("\nHeader complete\n")
+	//authHeader := "eedvdfbdbfdfbdfbdfbdfbdfbdbfbdfbdfbdb"
 	if authHeader == "" {
+		//fmt.Printf("Request :: \n%s\n", c.Request.Header["Authorization"][0])
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing"})
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
@@ -47,13 +54,29 @@ func AuthMiddleware(c *gin.Context) {
 	// Create a new HTTP client
 	client := &http.Client{}
 
+	// upath := c.Request.URL.Path
+	// upath = strings.Replace(upath, "/", "", 1)
+	// body := struct {
+	// 	Endpoint string `json:"endpoint"`
+	// }{
+	// 	Endpoint: upath,
+	// }
+	// json_body, err := json.Marshal(&body)
+	// if err != nil {
+	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to create body"})
+	// 	c.AbortWithStatus(http.StatusInternalServerError)
+	// 	return
+	// }
+
 	req, err := http.NewRequest(http.MethodPost, authurl, nil)
 	if err != nil {
-		fmt.Printf("client: could not create request: %s\n", err)
-		os.Exit(1)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Middleware : Could not create request"})
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", authHeader)
+
 	res, err := client.Do(req)
 	if err != nil {
 		panic(err)
@@ -79,7 +102,14 @@ func AuthMiddleware(c *gin.Context) {
 		fmt.Print("Cannot unmarshal data : ", err)
 	}
 	fmt.Printf("\nCurrent User : %v\n\n", ResponceData)
-	c.Next()
+	if ResponceData.Status == 200 {
+		CurrentUser = ResponceData.User
+		c.Next()
+	} else {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Un authorized",
+		})
+	}
 }
 
 // Create a decoder object from the response body
