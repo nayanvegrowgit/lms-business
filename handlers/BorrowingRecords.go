@@ -4,6 +4,7 @@ import (
 	"booksMan/authorization"
 	"booksMan/models"
 	"booksMan/repository"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -12,8 +13,6 @@ import (
 
 func ListBorrowRecordHandler(c *gin.Context) {
 	if authorization.CurrentUser.Role_ID != 3 {
-		var brs []models.BorrowingRecord
-
 		brs, err := repository.AllBorrowRecord()
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -22,8 +21,8 @@ func ListBorrowRecordHandler(c *gin.Context) {
 			return
 		}
 		c.JSON(200, gin.H{
-			"brs":   brs,
-			"error": nil,
+			"borrowing_record": brs,
+			"error":            nil,
 		})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -59,22 +58,23 @@ func IssueBookHandler(c *gin.Context) {
 		return
 	}
 }
-func SearchBorrowRecordHandler(c *gin.Context) {
-	if authorization.CurrentUser.Role_ID == 3 {
-		var brs []models.Book
 
-		brs, err := repository.SearchBorrowRecord(authorization.CurrentUser.ID)
+func SearchBorrowRecordHandler(c *gin.Context) {
+	//var result []models.BorrowingRecordResult
+	if authorization.CurrentUser.Role_ID == 3 {
+		fmt.Printf("user id in SearchBorrowRecordHandler :: %d\n", authorization.CurrentUser.ID)
+		var err error
+		result, err := repository.SearchBorrowRecord(authorization.CurrentUser.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"books": nil,
-				"error": err,
+				"borrowing_record": nil,
+				"error":            err,
 			})
 			return
 		}
-
 		c.JSON(200, gin.H{
-			"books": brs,
-			"error": nil,
+			"borrowing_record": result,
+			"error":            nil,
 		})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{
@@ -87,28 +87,31 @@ func SearchBorrowRecordHandler(c *gin.Context) {
 
 func ReturnBookHandler(c *gin.Context) {
 	if authorization.CurrentUser.Role_ID == 3 {
-		var br models.BorrowingRecord
 		type requestBody struct {
-			id uint
+			Id uint `json:"id"`
 		}
 		var s requestBody
 		err := c.ShouldBindJSON(&s)
+		fmt.Printf("\nrequest body : %v\n", s)
+		fmt.Printf("bind json err %v", err)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		br, err = repository.UpdateBorrowRecord(s.id)
+		err = repository.UpdateBorrowRecord(s.Id)
+
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		c.JSON(200, gin.H{
-			"br":    br,
+
 			"error": nil,
 		})
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"br":    nil,
+
 			"error": "Un Authorized",
 		})
 		return

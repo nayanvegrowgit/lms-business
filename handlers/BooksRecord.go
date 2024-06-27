@@ -6,16 +6,43 @@ import (
 	"booksMan/authorization"
 	"booksMan/models"
 	"booksMan/repository"
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
+// GET total number of books ::
+func FindTotal(c *gin.Context) {
+	result, err := repository.GetTotalAvailableBooks()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"sum":   result,
+			"error": nil,
+		})
+	}
+}
+
 // GET all books
 func ListBooks(c *gin.Context) {
+	type Constraint struct {
+		Offset uint `json:"offset"`
+		Limit  uint `json:"limit"`
+	}
+	var constraint Constraint
 
-	books, err := repository.GETreturnAllBooks()
+	err := c.ShouldBindJSON(&constraint)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	fmt.Printf("constraint : %v\n", constraint)
+
+	books, err := repository.GETreturnAllBooks(constraint.Offset, constraint.Limit)
 	//fmt.Printf("books : %v", books)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -23,6 +50,7 @@ func ListBooks(c *gin.Context) {
 		})
 		return
 	}
+	fmt.Printf("Books : %v\n", books)
 	c.JSON(200, gin.H{
 		"books": books,
 		"error": nil,
@@ -39,6 +67,8 @@ func AddBookHandler(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		fmt.Printf("book : %v\n", book)
+
 		result, err := repository.POSTcreateBook(&book)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{

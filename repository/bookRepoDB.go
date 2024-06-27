@@ -35,13 +35,43 @@ func DELETEdeleteBook(id uint) error {
 	return result.Error
 }
 
-func GETreturnAllBooks() ([]models.Book, error) {
+func GETreturnAllBooks(Offset uint, Limit uint) ([]models.Book, error) {
 	var books []models.Book
-	result := Db.Find(&books)
+	rows, err := Db.Raw(" SELECT *  FROM books LIMIT ? OFFSET ?;", Limit, Offset).Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err = Db.ScanRows(rows, &books)
+		if err != nil {
+			break
+		}
+	}
+
+	//	result := Db.Find(&books)
+	if err != nil {
+		return nil, err
+	} else {
+		fmt.Printf("in db handler :: books :\n %v ", books)
+		return books, err
+	}
+}
+
+type ValuesSum struct {
+	Total     uint `json:"total"`
+	Available uint `json:"available"`
+}
+
+func GetTotalAvailableBooks() ([]ValuesSum, error) {
+	var value []ValuesSum
+	result := Db.Raw("select sum(total) as total, sum(available) available from books;").Scan(&value)
+	//result := Db.Find(&books)
 	if result.Error != nil {
 		return nil, result.Error
 	} else {
-		//fmt.Printf("in db handler :: books :\n %v", books)
-		return books, result.Error
+		fmt.Printf("in db handler :: values :\n %v", value)
+		return value, nil
 	}
 }

@@ -50,27 +50,15 @@ func AuthMiddleware(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
+	fmt.Printf("\nAuthtoken revived ::\n %s :\t %s\n\n", authToken[0], authToken[1])
+
 	var authurl string = "http://localhost:3001/auth_controller"
 	// Create a new HTTP client
 	client := &http.Client{}
 
-	// upath := c.Request.URL.Path
-	// upath = strings.Replace(upath, "/", "", 1)
-	// body := struct {
-	// 	Endpoint string `json:"endpoint"`
-	// }{
-	// 	Endpoint: upath,
-	// }
-	// json_body, err := json.Marshal(&body)
-	// if err != nil {
-	// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Failed to create body"})
-	// 	c.AbortWithStatus(http.StatusInternalServerError)
-	// 	return
-	// }
-
 	req, err := http.NewRequest(http.MethodPost, authurl, nil)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Middleware : Could not create request"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Middleware : Could not create request"})
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
@@ -79,11 +67,12 @@ func AuthMiddleware(c *gin.Context) {
 
 	res, err := client.Do(req)
 	if err != nil {
-		panic(err)
+		fmt.Printf("Error recided from client.Do \n err :\t%s\n", err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+
 	}
 	defer res.Body.Close()
-	fmt.Println("Response status:", res.Status)
-	fmt.Print("\n\n res ::: ", res)
+	//fmt.Print("\n\n res ::: ", res)
 
 	scanner := bufio.NewScanner(res.Body)
 	var responcebody []string
@@ -94,24 +83,28 @@ func AuthMiddleware(c *gin.Context) {
 	if err := scanner.Err(); err != nil {
 		panic(err)
 	}
+	fmt.Println("\nResponse status:", res.Status)
 	fmt.Printf("\nResponce body :\t")
 	fmt.Println(responcebody)
-
-	err = json.Unmarshal([]byte(responcebody[0]), &ResponceData)
-	if err != nil {
-		fmt.Print("Cannot unmarshal data : ", err)
-	}
-	fmt.Printf("\nCurrent User : %v\n\n", ResponceData)
-	if ResponceData.Status == 200 {
-		CurrentUser = ResponceData.User
-		c.Next()
+	if res.Status == "200 OK" {
+		err = json.Unmarshal([]byte(responcebody[0]), &ResponceData)
+		if err != nil {
+			fmt.Print("Cannot unmarshal data : ", err)
+		}
+		fmt.Printf("\nCurrent User : %v\n\n", ResponceData)
+		if ResponceData.Status == 200 {
+			CurrentUser = ResponceData.User
+			c.Next()
+		} else {
+			c.JSON(http.StatusForbidden, gin.H{
+				"error": "Un authorized",
+			})
+			c.AbortWithStatus(http.StatusForbidden)
+		}
 	} else {
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Un authorized",
+			"error": responcebody[0],
 		})
+		c.AbortWithStatus(http.StatusUnauthorized)
 	}
 }
-
-// Create a decoder object from the response body
-
-// Define a variable to store the decoded data

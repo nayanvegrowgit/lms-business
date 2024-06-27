@@ -3,7 +3,6 @@ package repository
 import (
 	"booksMan/models"
 	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -32,49 +31,73 @@ func CreateBorrowRecord(br *models.BorrowingRecord) (*models.BorrowingRecord, er
 	return nil, nil
 }
 
-func SearchBorrowRecord(userID uint) ([]models.Book, error) {
-	var books []models.Book
-	type Result struct {
-		id uint
-	}
-	var result []Result
-	resp := Db.Raw("SELECT book_id FROM borrowing_records WHERE user_id = ?", userID).Scan(&result)
+type resultFormat struct {
+	Id           uint   `json:"br_id"`
+	Book_ID      uint   `json:"book_id"`
+	Title        string ` json:"title"`
+	Author       string `json:"author"`
+	DateOfIssue  string `json:"date_of_issue"`
+	DateOfReturn string ` json:"date_of_return"`
+}
+
+func SearchBorrowRecord(userID uint) ([]resultFormat, error) {
+	var records []resultFormat
+	resp := Db.Raw("SELECT borrowing_records.*,	books.title as title, books.author as author FROM borrowing_records INNER JOIN books ON borrowing_records.book_id = books.id WHERE borrowing_records.user_id = ?;", userID).Scan(&records)
+
 	if resp.Error != nil {
 		return nil, resp.Error
 	}
-
-	fmt.Print("Result ::")
-	fmt.Printf(" %d ", len(result))
-	fmt.Print("\n")
-	if len(result) != 0 {
-		resp = Db.Find(&books, result)
-		if resp.Error != nil || len(books) == 0 {
-			return nil, resp.Error
-		}
-		return books, nil
-	}
-	println("No length of book id = 0")
-	return nil, nil
+	fmt.Printf("Result ::%v \n", records)
+	fmt.Printf("number of records : %d\n", resp.RowsAffected)
+	return records, nil
 }
 
-func UpdateBorrowRecord(id uint) (models.BorrowingRecord, error) { // Retur Book
+func UpdateBorrowRecord(id uint) error { // Retur Book
+	fmt.Printf("\nDB Query br id : %d\n", id)
 	var br models.BorrowingRecord
-	result := Db.First(&br, id)
+	result := Db.Raw("UPDATE borrowing_records SET date_of_return = CURDATE() WHERE id = ?;", id).Scan(&br)
+
 	if result.Error != nil {
-		result := Db.Model(&br).Updates(models.BorrowingRecord{DateOfReturn: time.Now().Format("2002-01-01")})
-		return br, result.Error
+		fmt.Printf("Error in query : %s", result.Error)
 	}
-	return br, nil
+
+	result = Db.First(&br, id)
+	fmt.Printf("br : %v", br)
+
+	var book models.Book
+	result = Db.First(&book, br.BookID)
+	if result.Error != nil {
+		return result.Error
+	}
+	book.Available = book.Available + 1
+	result = Db.Save(&book)
+	if result.Error != nil {
+		return result.Error
+	}
+	fmt.Printf("Rows updated in query : %d", result.RowsAffected)
+	return result.Error
 }
 
-func AllBorrowRecord() ([]models.BorrowingRecord, error) {
-	var brs []models.BorrowingRecord
-	result := Db.Find(&brs)  // SELECT * FROM users;
-	if result.Error != nil { // returns error
-		return nil, result.Error
-	} else {
-		return brs, result.Error
+type resultallFormat struct {
+	Id           uint   `json:"br_id"`
+	Book_ID      uint   `json:"book_id"`
+	User_ID      uint   `json:"user_id"`
+	Title        string ` json:"title"`
+	Author       string `json:"author"`
+	DateOfIssue  string `json:"date_of_issue"`
+	DateOfReturn string ` json:"date_of_return"`
+}
+
+func AllBorrowRecord() ([]resultallFormat, error) {
+	var records []resultallFormat
+	resp := Db.Raw("SELECT borrowing_records.*,	books.title as title, books.author as author FROM borrowing_records INNER JOIN books ON borrowing_records.book_id = books.id;").Scan(&records)
+
+	if resp.Error != nil {
+		return nil, resp.Error
 	}
+	fmt.Printf("Result ::%v \n", records)
+	fmt.Printf("number of records : %d\n", resp.RowsAffected)
+	return records, nil
 }
 
 func DeleteBorrowRecord(id uint) error {

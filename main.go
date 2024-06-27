@@ -22,7 +22,8 @@ func main() {
 		})
 	})
 
-	router.GET("/book", authorization.AuthMiddleware, handlers.ListBooks)
+	router.GET("/gettotal", authorization.AuthMiddleware, handlers.FindTotal)
+	router.POST("/allbook", authorization.AuthMiddleware, handlers.ListBooks)
 	router.POST("/book", authorization.AuthMiddleware, handlers.AddBookHandler)
 	router.POST("/book/search", authorization.AuthMiddleware, handlers.SearchBooksHandler)
 	router.PATCH("/book/:id", authorization.AuthMiddleware, handlers.UpdateBookHandler)
@@ -32,7 +33,7 @@ func main() {
 	router.GET("/borrow", authorization.AuthMiddleware, handlers.ListBorrowRecordHandler)
 	router.POST("/borrow", authorization.AuthMiddleware, handlers.IssueBookHandler)
 	router.GET("/borrowedbooks", authorization.AuthMiddleware, handlers.SearchBorrowRecordHandler)
-	router.PATCH("/borrow/:id", authorization.AuthMiddleware, handlers.ReturnBookHandler)
+	router.POST("/borrow/return", authorization.AuthMiddleware, handlers.ReturnBookHandler)
 	router.DELETE("/borrow/:id", authorization.AuthMiddleware, handlers.DeleteBorrowRecordHandler)
 	router.Run()
 }
