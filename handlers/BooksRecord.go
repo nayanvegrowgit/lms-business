@@ -21,7 +21,7 @@ func FindTotal(c *gin.Context) {
 
 	} else {
 		c.JSON(http.StatusOK, gin.H{
-			"sum":   result,
+			"sum":   result[0],
 			"error": nil,
 		})
 	}

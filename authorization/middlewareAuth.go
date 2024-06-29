@@ -30,15 +30,7 @@ func LoggerMiddleware() gin.HandlerFunc {
 
 func AuthMiddleware(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
-	//authHeader := c.Request.Header["Authorization"][0]
-	print("Read request header\n")
-	for key, value := range c.Request.Header {
-		fmt.Println("Header:", key, "=", value)
-	}
-	print("\nHeader complete\n")
-	//authHeader := "eedvdfbdbfdfbdfbdfbdfbdfbdbfbdfbdfbdb"
 	if authHeader == "" {
-		//fmt.Printf("Request :: \n%s\n", c.Request.Header["Authorization"][0])
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is missing"})
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
@@ -50,8 +42,6 @@ func AuthMiddleware(c *gin.Context) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
-	fmt.Printf("\nAuthtoken revived ::\n %s :\t %s\n\n", authToken[0], authToken[1])
-
 	var authurl string = "http://localhost:3001/auth_controller"
 	// Create a new HTTP client
 	client := &http.Client{}
@@ -78,14 +68,10 @@ func AuthMiddleware(c *gin.Context) {
 	var responcebody []string
 	for i := 0; scanner.Scan(); i++ {
 		responcebody = append(responcebody, (scanner.Text()))
-		fmt.Printf("i %d  : responcebody[%d] :: %s\n", i, i, responcebody[i])
 	}
 	if err := scanner.Err(); err != nil {
 		panic(err)
 	}
-	fmt.Println("\nResponse status:", res.Status)
-	fmt.Printf("\nResponce body :\t")
-	fmt.Println(responcebody)
 	if res.Status == "200 OK" {
 		err = json.Unmarshal([]byte(responcebody[0]), &ResponceData)
 		if err != nil {

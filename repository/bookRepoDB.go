@@ -24,8 +24,15 @@ func POSTsearchBook(books []models.Book, searchTitle string) (uint64, error) {
 }
 
 func PATCHupdateBook(book *models.Book) error {
-	Db.First(book.ID)
-	result := Db.Model(&models.Book{}).Where("id = ?", book.ID).Updates(book)
+	fmt.Printf("Update book db : book :: %v\n", book)
+	result := Db.First(book.ID)
+	fmt.Printf("after Db.First : result :: %v\n", result)
+	fmt.Printf("book db : book :: %v\n", book)
+
+	result = Db.Model(&models.Book{}).Where("id = ?", book.ID).Updates(book)
+	fmt.Printf("after Modal : result :: %v\n", result)
+	fmt.Printf("after Modal : book :: %v\n", book)
+
 	return result.Error
 }
 

@@ -13,7 +13,20 @@ import (
 
 func ListBorrowRecordHandler(c *gin.Context) {
 	if authorization.CurrentUser.Role_ID != 3 {
-		brs, err := repository.AllBorrowRecord()
+		type Constraint struct {
+			Offset uint `json:"offset"`
+			Limit  uint `json:"limit"`
+		}
+		var constraint Constraint
+
+		err := c.ShouldBindJSON(&constraint)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		fmt.Printf("constraint : %v\n", constraint)
+
+		brs, err := repository.AllBorrowRecord(constraint.Offset, constraint.Limit)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": err,
