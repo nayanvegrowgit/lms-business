@@ -42,9 +42,10 @@ func DELETEdeleteBook(id uint) error {
 	return result.Error
 }
 
-func GETreturnAllBooks(Offset uint, Limit uint) ([]models.Book, error) {
+func GETreturnAllBooks(Offset uint, Limit uint, Filter string) ([]models.Book, error) {
 	var books []models.Book
-	rows, err := Db.Raw(" SELECT *  FROM books LIMIT ? OFFSET ?;", Limit, Offset).Rows()
+
+	rows, err := Db.Raw(" SELECT *  FROM books WHERE title LIKE ? or author LIKE ? or publisher LIKE ? or genre LIKE ? LIMIT ? OFFSET ?;", Filter, Filter, Filter, Filter, Limit, Offset).Rows()
 	if err != nil {
 		return nil, err
 	}

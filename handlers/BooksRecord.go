@@ -30,8 +30,9 @@ func FindTotal(c *gin.Context) {
 // GET all books
 func ListBooks(c *gin.Context) {
 	type Constraint struct {
-		Offset uint `json:"offset"`
-		Limit  uint `json:"limit"`
+		Offset uint   `json:"offset"`
+		Limit  uint   `json:"limit"`
+		Filter string `json:"filter`
 	}
 	var constraint Constraint
 
@@ -42,7 +43,7 @@ func ListBooks(c *gin.Context) {
 	}
 	fmt.Printf("constraint : %v\n", constraint)
 
-	books, err := repository.GETreturnAllBooks(constraint.Offset, constraint.Limit)
+	books, err := repository.GETreturnAllBooks(constraint.Offset, constraint.Limit, constraint.Filter)
 	//fmt.Printf("books : %v", books)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

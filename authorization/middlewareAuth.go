@@ -62,7 +62,6 @@ func AuthMiddleware(c *gin.Context) {
 
 	}
 	defer res.Body.Close()
-	//fmt.Print("\n\n res ::: ", res)
 
 	scanner := bufio.NewScanner(res.Body)
 	var responcebody []string
